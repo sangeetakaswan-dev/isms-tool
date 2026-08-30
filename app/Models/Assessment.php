@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Scopes\TenantScope;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Assessment extends Model
 {
@@ -87,5 +89,20 @@ class Assessment extends Model
         return $totalApplicable > 0
             ? round(($compliantResponses / $totalApplicable) * 100, 2)
             : 0;
+    }
+
+    public function team(): HasMany
+    {
+        return $this->hasMany(AssessmentTeam::class);
+    }
+
+    public function assessors(): HasMany
+    {
+        return $this->hasMany(AssessmentTeam::class)->where('role', 'assessor');
+    }
+
+    public function reviewers(): HasMany
+    {
+        return $this->hasMany(AssessmentTeam::class)->where('role', 'reviewer');
     }
 }

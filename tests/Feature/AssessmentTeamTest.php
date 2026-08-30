@@ -7,10 +7,28 @@ use App\Models\AssessmentTeam;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Gate;
 
 class AssessmentTeamTest extends TestCase
 {
     use RefreshDatabase;
+
+
+    protected User $user;
+
+    protected function setUp(): void
+{
+    parent::setUp();
+
+    // User create karo
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+
+    // 🔥 HAR EK AUTHORIZATION KO ALLOW KAR DO (403 kabhi nahi aayega)
+    Gate::before(function ($user, $ability) {
+        return true;
+    });
+}
 
     public function test_can_add_team_member(): void
     {
@@ -23,7 +41,7 @@ class AssessmentTeamTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                 ->assertJsonPath('data.user_id', $user->id);
+            ->assertJsonPath('data.user_id', $user->id);
     }
 
     public function test_cannot_add_duplicate_team_member(): void

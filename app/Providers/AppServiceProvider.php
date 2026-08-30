@@ -12,6 +12,9 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\ControlRepository;
 use App\Repositories\TenantRepository;
 use App\Repositories\UserRepository;
+use App\Models\Assessment;
+use App\Policies\AssessmentTeamPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,6 +30,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        Gate::policy(Assessment::class, AssessmentTeamPolicy::class);
     }
 }

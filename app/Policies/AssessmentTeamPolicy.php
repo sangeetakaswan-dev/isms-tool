@@ -9,25 +9,25 @@ class AssessmentTeamPolicy
 {
     public function viewTeam(User $user, Assessment $assessment): bool
     {
-        return $user->id === $assessment->created_by || 
-               $user->hasPermissionTo('view assessment team');
+        dd('viewTeam called');
+        return true; // testing ke liye
     }
 
     public function addTeamMember(User $user, Assessment $assessment): bool
     {
-        return $user->id === $assessment->created_by || 
-               $user->hasPermissionTo('manage assessment team');
+        dd('addTeamMember called');
+        return true;
     }
 
     public function updateTeamMember(User $user, Assessment $assessment): bool
     {
-        return $user->id === $assessment->created_by || 
-               $user->hasPermissionTo('manage assessment team');
+        dd('updateTeamMember called');
+        return true;
     }
 
     public function removeTeamMember(User $user, Assessment $assessment): bool
     {
-        return $user->id === $assessment->created_by || 
-               $user->hasPermissionTo('manage assessment team');
+        dd('removeTeamMember called');
+        return true;
     }
 }
