@@ -1,18 +1,24 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\TenantController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AssessmentResponseController;
+use App\Http\Controllers\AssetController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RiskController;
+use App\Http\Controllers\TenantController;
+use App\Http\Controllers\TreatmentPlanController;
 use Illuminate\Support\Facades\Route;
 
+// Home redirect
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Authenticated routes
 Route::middleware(['auth', 'verified'])->group(function () {
+
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -38,47 +44,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [InvitationController::class, 'store'])->name('store');
         Route::delete('/{invitation}', [InvitationController::class, 'destroy'])->name('destroy');
     });
-});
 
-// Assessment Routes
-Route::middleware(['auth', 'verified'])->group(function () {
-
-    // Assessment CRUD
+    // ========== PHASE 2: ASSESSMENT ==========
     Route::resource('assessments', AssessmentController::class);
 
     // Assessment lifecycle
-    Route::post('/assessments/{assessment}/start', [AssessmentController::class, 'start'])
-        ->name('assessments.start');
-
-    Route::post('/assessments/{assessment}/complete', [AssessmentController::class, 'complete'])
-        ->name('assessments.complete');
-
-    Route::post('/assessments/{assessment}/archive', [AssessmentController::class, 'archive'])
-        ->name('assessments.archive');
+    Route::post('/assessments/{assessment}/start', [AssessmentController::class, 'start'])->name('assessments.start');
+    Route::post('/assessments/{assessment}/complete', [AssessmentController::class, 'complete'])->name('assessments.complete');
+    Route::post('/assessments/{assessment}/archive', [AssessmentController::class, 'archive'])->name('assessments.archive');
 
     // Assessment Responses
-    Route::prefix('assessments/{assessment}/responses')->group(function () {
-        Route::get('/', [AssessmentResponseController::class, 'index'])
-            ->name('assessments.responses.index');
-
-        Route::get('/domain/{domain}', [AssessmentResponseController::class, 'showDomain'])
-            ->name('assessments.responses.domain');
-
-        Route::put('/{response}', [AssessmentResponseController::class, 'update'])
-            ->name('assessments.responses.update');
-
-        Route::post('/bulk-update', [AssessmentResponseController::class, 'bulkUpdate'])
-            ->name('assessments.responses.bulk-update');
-
-        Route::post('/bulk-assign', [AssessmentResponseController::class, 'bulkAssign'])
-            ->name('assessments.responses.bulk-assign');
-
-        Route::post('/auto-assign', [AssessmentResponseController::class, 'autoAssign'])
-            ->name('assessments.responses.auto-assign');
-
-        Route::post('/{response}/evidence', [AssessmentResponseController::class, 'uploadEvidence'])
-            ->name('assessments.responses.evidence');
+    Route::prefix('assessments/{assessment}/responses')->name('assessments.responses.')->group(function () {
+        Route::get('/', [AssessmentResponseController::class, 'index'])->name('index');
+        Route::get('/domain/{domain}', [AssessmentResponseController::class, 'showDomain'])->name('domain');
+        Route::put('/{response}', [AssessmentResponseController::class, 'update'])->name('update');
+        Route::post('/bulk-update', [AssessmentResponseController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::post('/bulk-assign', [AssessmentResponseController::class, 'bulkAssign'])->name('bulk-assign');
+        Route::post('/auto-assign', [AssessmentResponseController::class, 'autoAssign'])->name('auto-assign');
+        Route::post('/{response}/evidence', [AssessmentResponseController::class, 'uploadEvidence'])->name('evidence');
     });
+
+    // ========== PHASE 3: RISK MANAGEMENT ==========
+    // Assets
+    Route::resource('assets', AssetController::class);
+
+    // Risks
+    Route::resource('risks', RiskController::class);
+    Route::get('risks/heatmap', [RiskController::class, 'heatmap'])->name('risks.heatmap');
+    Route::get('risks/export/excel', [RiskController::class, 'exportExcel'])->name('risks.export.excel');
+
+    // Treatment Plans
+    Route::resource('treatments', TreatmentPlanController::class);
 });
 
+// Auth routes (Breeze)
 require __DIR__ . '/auth.php';
