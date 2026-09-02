@@ -75,6 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Treatment Plans
     Route::resource('treatments', TreatmentPlanController::class);
+
+    Route::get('/dashboard/risk', function () {
+        return view('dashboard.risk');
+    })->name('dashboard.risk');
 });
 
 // Auth routes (Breeze)
