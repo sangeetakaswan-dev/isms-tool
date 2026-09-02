@@ -10,24 +10,52 @@ use App\Http\Controllers\RiskController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TreatmentPlanController;
 use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\SoAController;
 
-// Home redirect
+// Note: SoAController is used in SOA routes but not imported.
+// Add: use App\Http\Controllers\SoAController;
+
+/*
+|--------------------------------------------------------------------------
+| Home Redirect
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-// Authenticated routes
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard
+    /*
+    |----------------------------------------------------------------------
+    | Dashboard
+    |----------------------------------------------------------------------
+    */
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/risk', function () {
+        return view('dashboard.risk');
+    })->name('dashboard.risk');
 
-    // Profile
+    /*
+    |----------------------------------------------------------------------
+    | Profile Management
+    |----------------------------------------------------------------------
+    */
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Tenant Management
+    /*
+    |----------------------------------------------------------------------
+    | Tenant Management
+    |----------------------------------------------------------------------
+    */
     Route::prefix('tenants')->name('tenants.')->group(function () {
         Route::get('/', [TenantController::class, 'index'])->name('index');
         Route::get('/setup', [TenantController::class, 'create'])->name('setup');
@@ -38,22 +66,51 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{tenant}/switch', [TenantController::class, 'switchTenant'])->name('switch');
     });
 
-    // Invitations
+    /*
+    |----------------------------------------------------------------------
+    | Invitations (nested under tenants)
+    |----------------------------------------------------------------------
+    */
     Route::prefix('tenants/{tenant}/invitations')->name('invitations.')->group(function () {
         Route::get('/', [InvitationController::class, 'index'])->name('index');
         Route::post('/', [InvitationController::class, 'store'])->name('store');
         Route::delete('/{invitation}', [InvitationController::class, 'destroy'])->name('destroy');
     });
 
-    // ========== PHASE 2: ASSESSMENT ==========
+    /*
+    |----------------------------------------------------------------------
+    | Assessment Management
+    |----------------------------------------------------------------------
+    */
     Route::resource('assessments', AssessmentController::class);
 
-    // Assessment lifecycle
+    // Assessment lifecycle actions
     Route::post('/assessments/{assessment}/start', [AssessmentController::class, 'start'])->name('assessments.start');
     Route::post('/assessments/{assessment}/complete', [AssessmentController::class, 'complete'])->name('assessments.complete');
     Route::post('/assessments/{assessment}/archive', [AssessmentController::class, 'archive'])->name('assessments.archive');
 
-    // Assessment Responses
+    /*
+    |----------------------------------------------------------------------
+    | Statement of Applicability (SOA) – nested under assessments
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('assessments/{assessment}/soa')->group(function () {
+        Route::get('/', [SoAController::class, 'index'])->name('soa.index');
+        Route::post('/generate', [SoAController::class, 'generate'])->name('soa.generate');
+        Route::post('/approve/{entry}', [SoAController::class, 'approve'])->name('soa.approve');
+        Route::post('/bulk-approve', [SoAController::class, 'bulkApprove'])->name('soa.bulkApprove');
+        Route::post('/version', [SoAController::class, 'createVersion'])->name('soa.version');
+        Route::get('/version/{version}', [SoAController::class, 'show'])->name('soa.version.show');
+        Route::get('/compare/{v1}/{v2}', [SoAController::class, 'compare'])->name('soa.compare');
+        Route::get('/export-excel', [SoAController::class, 'exportExcel'])->name('soa.export.excel');
+        Route::get('/export-pdf', [SoAController::class, 'exportPdf'])->name('soa.export.pdf');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Assessment Responses
+    |----------------------------------------------------------------------
+    */
     Route::prefix('assessments/{assessment}/responses')->name('assessments.responses.')->group(function () {
         Route::get('/', [AssessmentResponseController::class, 'index'])->name('index');
         Route::get('/domain/{domain}', [AssessmentResponseController::class, 'showDomain'])->name('domain');
@@ -64,7 +121,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{response}/evidence', [AssessmentResponseController::class, 'uploadEvidence'])->name('evidence');
     });
 
-    // ========== PHASE 3: RISK MANAGEMENT ==========
+    /*
+    |----------------------------------------------------------------------
+    | Risk Management
+    |----------------------------------------------------------------------
+    */
     // Assets
     Route::resource('assets', AssetController::class);
 
@@ -75,11 +136,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Treatment Plans
     Route::resource('treatments', TreatmentPlanController::class);
-
-    Route::get('/dashboard/risk', function () {
-        return view('dashboard.risk');
-    })->name('dashboard.risk');
 });
 
-// Auth routes (Breeze)
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes (Breeze)
+|--------------------------------------------------------------------------
+*/
 require __DIR__ . '/auth.php';

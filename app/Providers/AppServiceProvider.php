@@ -26,6 +26,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AssessmentRepositoryInterface::class, AssessmentRepository::class);
         $this->app->bind(ControlRepositoryInterface::class, ControlRepository::class);
         $this->app->bind(AssessmentResponseRepositoryInterface::class, AssessmentResponseRepository::class);
+        $this->app->bind(
+            \App\Repositories\Contracts\SoAEntryRepositoryInterface::class,
+            \App\Repositories\SoAEntryRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Contracts\SoAVersionRepositoryInterface::class,
+            \App\Repositories\SoAVersionRepository::class
+        );
     }
 
     public function boot(): void
