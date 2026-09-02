@@ -25,7 +25,20 @@ class AssetController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'asset_type' => 'required|in:hardware,software,data,people,facility,service',
+            'confidentiality_rating' => 'required|integer|min:1|max:5',
+            'integrity_rating' => 'required|integer|min:1|max:5',
+            'availability_rating' => 'required|integer|min:1|max:5',
+            'description' => 'nullable|string',
+        ]);
+
+        $asset = Asset::create(array_merge($validated, [
+            'tenant_id' => auth()->user()->current_tenant_id,
+        ]));
+
+        return redirect()->route('assets.index')->with('success', 'Asset created.');
     }
 
     /**
@@ -44,9 +57,20 @@ class AssetController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Asset $asset)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'asset_type' => 'required|in:hardware,software,data,people,facility,service',
+            'confidentiality_rating' => 'required|integer|min:1|max:5',
+            'integrity_rating' => 'required|integer|min:1|max:5',
+            'availability_rating' => 'required|integer|min:1|max:5',
+            'description' => 'nullable|string',
+        ]);
+
+        $asset->update($validated);
+
+        return redirect()->route('assets.index')->with('success', 'Asset updated.');
     }
 
     /**
