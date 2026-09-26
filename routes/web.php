@@ -10,7 +10,9 @@ use App\Http\Controllers\RiskController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TreatmentPlanController;
 use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\DocumentReviewController;
+use App\Http\Controllers\DocumentVersionController;
 use App\Http\Controllers\SoAController;
 
 // Note: SoAController is used in SOA routes but not imported.
@@ -136,7 +138,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Treatment Plans
     Route::resource('treatments', TreatmentPlanController::class);
+
+    Route::resource('documents', DocumentController::class);
+    Route::post('documents/{document}/link-control/{control}', [DocumentController::class, 'linkControl'])->name('documents.link-control');
+    Route::post('documents/{document}/submit-review', [DocumentReviewController::class, 'submitForReview'])->name('documents.submit-review');
+    Route::post('documents/{document}/approve', [DocumentReviewController::class, 'approve'])->name('documents.approve');
+    Route::post('documents/{document}/reject', [DocumentReviewController::class, 'reject'])->name('documents.reject');
+    Route::post('documents/{document}/request-changes', [DocumentReviewController::class, 'requestChanges'])->name('documents.request-changes');
+    Route::post('documents/{document}/version', [DocumentVersionController::class, 'store'])->name('documents.versions.store');
 });
+
 
 /*
 |--------------------------------------------------------------------------

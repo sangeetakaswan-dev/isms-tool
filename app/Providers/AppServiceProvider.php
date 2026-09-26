@@ -34,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\SoAVersionRepositoryInterface::class,
             \App\Repositories\SoAVersionRepository::class
         );
+        $this->app->bind(
+            \App\Repositories\Contracts\DocumentRepositoryInterface::class,
+            \App\Repositories\DocumentRepository::class
+        );
     }
 
     public function boot(): void
