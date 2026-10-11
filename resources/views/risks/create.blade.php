@@ -1,82 +1,85 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Create Risk Assessment') }}
-        </h2>
+        <h2 class="font-semibold text-xl text-gray-800">Create Risk</h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <form action="{{ route('risks.store') }}" method="POST">
-                    @csrf
+    <div class="py-8">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <form method="POST" action="{{ route('risks.store') }}" class="bg-white shadow rounded-lg p-6 space-y-4">
+                @csrf
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Asset -->
-                        <div>
-                            <label for="asset_id" class="block text-sm font-medium text-gray-700">Asset</label>
-                            <select name="asset_id" id="asset_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                @foreach($assets as $asset)
-                                    <option value="{{ $asset->id }}">{{ $asset->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                <div>
+                    <label class="block text-sm font-medium">Title *</label>
+                    <input type="text" name="title" value="{{ old('title') }}" required
+                           class="mt-1 block w-full rounded border-gray-300">
+                    @error('title') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                </div>
 
-                        <!-- Threat -->
-                        <div>
-                            <label for="threat" class="block text-sm font-medium text-gray-700">Threat</label>
-                            <input type="text" name="threat" id="threat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
+                <div>
+                    <label class="block text-sm font-medium">Description</label>
+                    <textarea name="description" rows="4" class="mt-1 block w-full rounded border-gray-300">{{ old('description') }}</textarea>
+                </div>
 
-                        <!-- Vulnerability -->
-                        <div>
-                            <label for="vulnerability" class="block text-sm font-medium text-gray-700">Vulnerability</label>
-                            <input type="text" name="vulnerability" id="vulnerability" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
-
-                        <!-- Likelihood -->
-                        <div>
-                            <label for="likelihood" class="block text-sm font-medium text-gray-700">Likelihood (1-5)</label>
-                            <input type="number" name="likelihood" id="likelihood" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
-
-                        <!-- Impact -->
-                        <div>
-                            <label for="impact" class="block text-sm font-medium text-gray-700">Impact (1-5)</label>
-                            <input type="number" name="impact" id="impact" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                        </div>
-
-                        <!-- Treatment -->
-                        <div>
-                            <label for="treatment" class="block text-sm font-medium text-gray-700">Treatment</label>
-                            <select name="treatment" id="treatment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="accept">Accept</option>
-                                <option value="mitigate">Mitigate</option>
-                                <option value="transfer">Transfer</option>
-                                <option value="avoid">Avoid</option>
-                            </select>
-                        </div>
-
-                        <!-- Residual Likelihood (Optional) -->
-                        <div>
-                            <label for="residual_likelihood" class="block text-sm font-medium text-gray-700">Residual Likelihood (1-5)</label>
-                            <input type="number" name="residual_likelihood" id="residual_likelihood" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                        </div>
-
-                        <!-- Residual Impact (Optional) -->
-                        <div>
-                            <label for="residual_impact" class="block text-sm font-medium text-gray-700">Residual Impact (1-5)</label>
-                            <input type="number" name="residual_impact" id="residual_impact" min="1" max="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                        </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Category *</label>
+                        <select name="category" class="mt-1 block w-full rounded border-gray-300">
+                            @foreach(['technical','organizational','physical','people','compliance'] as $cat)
+                                <option value="{{ $cat }}" @selected(old('category') === $cat)>{{ ucfirst($cat) }}</option>
+                            @endforeach
+                        </select>
                     </div>
-
-                    <div class="mt-6">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-white hover:bg-blue-700">
-                            Create Risk
-                        </button>
+                    <div>
+                        <label class="block text-sm font-medium">Asset</label>
+                        <select name="asset_id" class="mt-1 block w-full rounded border-gray-300">
+                            <option value="">— None —</option>
+                            @foreach($assets as $asset)
+                                <option value="{{ $asset->id }}" @selected(old('asset_id') == $asset->id)>{{ $asset->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                </form>
-            </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Likelihood (1–5) *</label>
+                        <input type="number" name="likelihood" min="1" max="5" value="{{ old('likelihood', 3) }}" required
+                               class="mt-1 block w-full rounded border-gray-300">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Impact (1–5) *</label>
+                        <input type="number" name="impact" min="1" max="5" value="{{ old('impact', 3) }}" required
+                               class="mt-1 block w-full rounded border-gray-300">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium">Owner</label>
+                        <select name="owner_id" class="mt-1 block w-full rounded border-gray-300">
+                            <option value="">— Unassigned —</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" @selected(old('owner_id') == $user->id)>{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Status</label>
+                        <select name="status" class="mt-1 block w-full rounded border-gray-300">
+                            @foreach(['identified','assessed','treated','monitored','closed'] as $s)
+                                <option value="{{ $s }}" @selected(old('status') === $s)>{{ ucfirst($s) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <a href="{{ route('risks.index') }}" class="px-4 py-2 border rounded">Cancel</a>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                        Create Risk
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

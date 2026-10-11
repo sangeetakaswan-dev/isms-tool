@@ -15,7 +15,17 @@ use App\Repositories\UserRepository;
 use App\Models\Assessment;
 use App\Policies\AssessmentTeamPolicy;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Risk;
+use App\Policies\RiskPolicy;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\Reporting\Contracts\ReportRepositoryInterface;
+use App\Repositories\Reporting\ReportRepository;
+use App\Repositories\Contracts\RiskRepositoryInterface;
+use App\Repositories\RiskRepository;
+
+
+
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,10 +48,20 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\DocumentRepositoryInterface::class,
             \App\Repositories\DocumentRepository::class
         );
+
+        $this->app->bind(
+            ReportRepositoryInterface::class,
+            ReportRepository::class
+        );
+
+        $this->app->bind(RiskRepositoryInterface::class, RiskRepository::class);
+        
     }
 
     public function boot(): void
     {
         Gate::policy(Assessment::class, AssessmentTeamPolicy::class);
+        Gate::policy(Risk::class, RiskPolicy::class);
     }
+
 }

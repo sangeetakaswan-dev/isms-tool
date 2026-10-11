@@ -103,4 +103,12 @@ class User extends Authenticatable
             ->where('role', $role)
             ->exists();
     }
+    public function roleInCurrentTenant(): ?string
+{
+    return $this->tenants()
+        ->where('tenants.id', $this->current_tenant_id)
+        ->first()?->pivot?->role;
+}
+    
+
 }

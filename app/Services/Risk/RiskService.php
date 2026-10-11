@@ -3,66 +3,80 @@
 namespace App\Services\Risk;
 
 use App\DTOs\RiskData;
-use App\Models\RiskAssessment;
-use App\Repositories\RiskRepository;
-use Illuminate\Support\Facades\DB;
+use App\Models\Risk;
+use App\Repositories\Contracts\RiskRepositoryInterface;
+use App\Services\Notification\NotificationService;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class RiskService
 {
     public function __construct(
-        private RiskRepository $riskRepository,
-        private RiskCalculationService $riskCalculationService
-    ) {
-    }
+        private readonly RiskRepositoryInterface $repository,
+        private readonly NotificationService $notifications,
+    ) {}
 
-    public function createRisk(RiskData $data): RiskAssessment
+    public function create(RiskData $data): Risk
     {
-        return DB::transaction(function () use ($data) {
-            $risk = $this->riskRepository->create($data->toArray());
-            // If treatment or residual data provided, update residual
-            if (isset($data->residual_likelihood) && isset($data->residual_impact)) {
-                $this->updateResidualRisk($risk, $data->residual_likelihood, $data->residual_impact);
-            }
-            return $risk;
-        });
-    }
+        $risk = $this->repository->create($data->toArray());
 
-    public function updateRisk(int $id, RiskData $data): RiskAssessment
-    {
-        $risk = $this->riskRepository->find($id);
-        $risk->update($data->toArray());
-        if (isset($data->residual_likelihood) && isset($data->residual_impact)) {
-            $this->updateResidualRisk($risk, $data->residual_likelihood, $data->residual_impact);
+        Log::info('Risk created', ['risk_id' => $risk->id, 'tenant' => $risk->tenant_id]);
+
+        if ($risk->owner_id) {
+            $this->notifications->notifyRiskAssigned($risk);
         }
+
         return $risk;
     }
 
-    public function calculateRiskLevel(RiskAssessment $risk): string
+    public function update(Risk $risk, RiskData $data): Risk
     {
-        return $this->riskCalculationService->determineRiskLevel($risk->risk_score);
+        $previousOwner = $risk->owner_id;
+        $updated = $this->repository->update($risk, $data->toArray());
+
+        if ($updated->owner_id && $updated->owner_id !== $previousOwner) {
+            $this->notifications->notifyRiskAssigned($updated);
+        }
+
+        return $updated;
     }
 
-    public function applyTreatment(RiskAssessment $risk, string $treatment): void
+    public function delete(Risk $risk): bool
     {
-        $risk->treatment = $treatment;
-        $risk->save();
+        return $this->repository->delete($risk);
     }
 
-    public function reviewRisk(RiskAssessment $risk, array $updates): void
+    public function find(int $id): ?Risk
     {
-        $risk->update($updates);
-        $risk->review_date = now();
-        $risk->save();
+        return $this->repository->find($id);
     }
 
-    private function updateResidualRisk(RiskAssessment $risk, int $likelihood, int $impact): void
+    public function all(): Collection
     {
-        $score = $this->riskCalculationService->calculateRiskScore($likelihood, $impact);
-        $level = $this->riskCalculationService->determineRiskLevel($score);
-        $risk->residual_likelihood = $likelihood;
-        $risk->residual_impact = $impact;
-        $risk->residual_score = $score;
-        $risk->residual_level = $level;
-        $risk->save();
+        return $this->repository->all();
+    }
+
+    public function heatmap(): array
+    {
+        return $this->repository->heatmapData();
+    }
+
+    public function summary(): array
+    {
+        $all = $this->repository->all();
+
+        return [
+            'total'      => $all->count(),
+            'by_level'   => $all->groupBy('risk_level')->map->count()->toArray(),
+            'by_status'  => $all->groupBy('status')->map->count()->toArray(),
+            'critical'   => $all->where('risk_level', 'critical')->count(),
+            'high'       => $all->where('risk_level', 'high')->count(),
+            'open'       => $all->whereNotIn('status', ['closed'])->count(),
+        ];
+    }
+
+    public function topRisks(int $limit = 10): Collection
+    {
+        return $this->repository->topRisks($limit);
     }
 }

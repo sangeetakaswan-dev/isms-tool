@@ -14,6 +14,11 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentReviewController;
 use App\Http\Controllers\DocumentVersionController;
 use App\Http\Controllers\SoAController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RiskRegisterController;
+use App\Http\Controllers\RiskTreatmentController;
+
 
 // Note: SoAController is used in SOA routes but not imported.
 // Add: use App\Http\Controllers\SoAController;
@@ -43,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/risk', function () {
         return view('dashboard.risk');
     })->name('dashboard.risk');
+    Route::get('/dashboard/metrics', [DashboardController::class, 'metrics'])->name('dashboard.metrics');
 
     /*
     |----------------------------------------------------------------------
@@ -148,8 +154,49 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('documents/{document}/version', [DocumentVersionController::class, 'store'])->name('documents.versions.store');
 });
 
+Route::prefix('reports')->name('reports.')->group(function () {
+    Route::get('/', [ReportController::class, 'index'])->name('index');
+    Route::get('/history', [ReportController::class, 'history'])->name('history');
+    Route::get('/{type}', [ReportController::class, 'show'])->name('show');
+    Route::get('/{type}/export/{format}', [ReportController::class, 'export'])
+        ->whereIn('format', ['csv', 'pdf', 'xlsx'])
+        ->name('export');
+});
 
+
+// ─── Risk Register (Phase 7) ──────────────────────────
+Route::middleware(['auth', 'tenant.selected'])->group(function () {
+    // Risks
+    Route::get('/risks', [RiskRegisterController::class, 'index'])->name('risks.index');
+    Route::get('/risks/create', [RiskRegisterController::class, 'create'])->name('risks.create');
+    Route::post('/risks', [RiskRegisterController::class, 'store'])->name('risks.store');
+    Route::get('/risks/heatmap/data', [RiskRegisterController::class, 'heatmapData'])->name('risks.heatmap.data');
+    Route::get('/risks/{risk}', [RiskRegisterController::class, 'show'])->name('risks.show');
+    Route::get('/risks/{risk}/edit', [RiskRegisterController::class, 'edit'])->name('risks.edit');
+    Route::put('/risks/{risk}', [RiskRegisterController::class, 'update'])->name('risks.update');
+    Route::delete('/risks/{risk}', [RiskRegisterController::class, 'destroy'])->name('risks.destroy');
+
+    // Treatment plans — RISKS.TREATMENTS.* prefix (NO CONFLICT with Phase 3)
+    Route::get('/risks/{risk}/treatments/create', [RiskTreatmentController::class, 'create'])
+        ->name('risks.treatments.create');
+    Route::post('/risks/{risk}/treatments', [RiskTreatmentController::class, 'store'])
+        ->name('risks.treatments.store');
+    Route::get('/treatments/{plan}/edit', [RiskTreatmentController::class, 'edit'])
+        ->name('risks.treatments.edit');
+    Route::put('/treatments/{plan}', [RiskTreatmentController::class, 'update'])
+        ->name('risks.treatments.update');
+    Route::post('/treatments/{plan}/complete', [RiskTreatmentController::class, 'complete'])
+        ->name('risks.treatments.complete');
+    Route::delete('/treatments/{plan}', [RiskTreatmentController::class, 'destroy'])
+        ->name('risks.treatments.destroy');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+});
 /*
+
 |--------------------------------------------------------------------------
 | Authentication Routes (Breeze)
 |--------------------------------------------------------------------------
