@@ -38,11 +38,15 @@ class DashboardService
         $implemented = $controls->where('applicable', true)->where('implemented', true)->count();
         $score = $applicable > 0 ? round(($implemented / $applicable) * 100, 2) : 0;
 
-        $domainCompliance = $controls->groupBy('domain')->map(function ($group, $domain) {
+        // Fix: Domain object ki jagah uski property nikal rahe hain
+        $domainCompliance = $controls->groupBy('domain_id')->map(function ($group, $domainId) {
+            $domainModel = \App\Models\Domain::find($domainId);
+            $domainName = $domainModel ? $domainModel->name : 'Unassigned';
+
             $a = $group->where('applicable', true)->count();
             $i = $group->where('applicable', true)->where('implemented', true)->count();
             return [
-                'domain' => $domain ?: 'Unassigned',
+                'domain' => $domainName,
                 'score' => $a > 0 ? round(($i / $a) * 100, 2) : 0,
                 'applicable' => $a,
                 'implemented' => $i,
@@ -54,7 +58,10 @@ class DashboardService
             ->map(fn($g, $lvl) => ['level' => (int) $lvl, 'count' => $g->count()])
             ->values()->toArray();
 
+        // Fix: Total aur Open add kiya
         $riskSummary = [
+            'total' => $risks->count(),
+            'open' => $risks->whereNotIn('status', ['closed'])->count(),
             'critical' => $risks->where('risk_level', 'critical')->count(),
             'high' => $risks->where('risk_level', 'high')->count(),
             'medium' => $risks->where('risk_level', 'medium')->count(),

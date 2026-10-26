@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SoAExcelExport;
 use App\Exports\SoAPdfExport;
 
+
 class SoAController extends Controller
 {
     public function __construct(
@@ -25,7 +26,15 @@ class SoAController extends Controller
         $entries = $this->soaService->getSoAEntries($assessment);
         return view('soa.index', compact('assessment', 'versions', 'entries'));
     }
+    public function soaVersions()
+    {
+        return $this->hasMany(SoAVersion::class);
+    }
 
+    public function soaEntries()
+    {
+        return $this->hasMany(SoAEntry::class);
+    }
     public function generate(Assessment $assessment)
     {
         $this->soaService->generateSoA($assessment);

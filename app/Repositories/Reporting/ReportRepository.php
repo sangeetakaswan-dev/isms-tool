@@ -54,7 +54,7 @@ class ReportRepository implements ReportRepositoryInterface
             return collect();
         }
 
-        return $this->queryWithTenant($class, $tenantId, ['owner']);
+        return $this->queryWithTenant($class, $tenantId);
     }
 
     public function documents(int $tenantId): Collection

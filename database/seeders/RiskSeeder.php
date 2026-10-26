@@ -2,42 +2,153 @@
 
 namespace Database\Seeders;
 
-use App\Models\RiskAssessment;
+use App\Models\Asset;
+use App\Models\Risk;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class RiskSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
+        $tenant = Tenant::where('slug', 'demo-organization')->first();
+        $owner = User::where('email', 'owner@demo.com')->first();
+
+        if (!$tenant) {
+            $this->command->warn('⚠ No demo tenant found. Run UserSeeder first.');
+            return;
+        }
+
+        $assets = Asset::where('tenant_id', $tenant->id)->get()->keyBy('name');
+
         $risks = [
-            ['asset_id' => 1, 'threat' => 'Unauthorized Access', 'vulnerability' => 'Weak Passwords', 'likelihood' => 4, 'impact' => 5, 'status' => 'identified'],
-            ['asset_id' => 2, 'threat' => 'Network Outage', 'vulnerability' => 'Single Point of Failure', 'likelihood' => 3, 'impact' => 5, 'status' => 'under_review'],
-            ['asset_id' => 3, 'threat' => 'Data Breach', 'vulnerability' => 'Lost/Stolen Device', 'likelihood' => 4, 'impact' => 5, 'status' => 'identified'],
-            ['asset_id' => 4, 'threat' => 'Service Disruption', 'vulnerability' => 'Cloud Provider Outage', 'likelihood' => 3, 'impact' => 4, 'status' => 'in_treatment'],
-            ['asset_id' => 5, 'threat' => 'Insider Threat', 'vulnerability' => 'Lack of Access Controls', 'likelihood' => 3, 'impact' => 5, 'status' => 'identified'],
-            ['asset_id' => 6, 'threat' => 'Code Injection', 'vulnerability' => 'Insecure Code Practices', 'likelihood' => 4, 'impact' => 4, 'status' => 'under_review'],
-            ['asset_id' => 7, 'threat' => 'Physical Break-in', 'vulnerability' => 'Weak Physical Security', 'likelihood' => 2, 'impact' => 4, 'status' => 'identified'],
-            ['asset_id' => 8, 'threat' => 'Data Loss', 'vulnerability' => 'Backup Failure', 'likelihood' => 2, 'impact' => 5, 'status' => 'in_treatment'],
-            ['asset_id' => 9, 'threat' => 'Phishing Attack', 'vulnerability' => 'Lack of User Awareness', 'likelihood' => 5, 'impact' => 4, 'status' => 'identified'],
-            ['asset_id' => 10, 'threat' => 'Fraud', 'vulnerability' => 'Weak Financial Controls', 'likelihood' => 2, 'impact' => 5, 'status' => 'identified'],
+            [
+                'title' => 'Unauthorized access to CRM database',
+                'description' => 'Weak access controls could allow unauthorized users to access customer PII.',
+                'category' => 'technical',
+                'likelihood' => 4,
+                'impact' => 5,
+                'asset_name' => 'CRM Database Server',
+                'status' => 'assessed',
+            ],
+            [
+                'title' => 'Phishing attack on employees',
+                'description' => 'Employees may fall victim to phishing emails leading to credential theft.',
+                'category' => 'people',
+                'likelihood' => 5,
+                'impact' => 4,
+                'asset_name' => null,
+                'status' => 'treated',
+            ],
+            [
+                'title' => 'Cloud misconfiguration exposing data',
+                'description' => 'S3 bucket or IAM misconfiguration could expose sensitive data publicly.',
+                'category' => 'technical',
+                'likelihood' => 3,
+                'impact' => 5,
+                'asset_name' => 'Cloud Infrastructure (AWS)',
+                'status' => 'identified',
+            ],
+            [
+                'title' => 'Laptop theft with unencrypted data',
+                'description' => 'Employee laptops stolen while traveling could expose company data if unencrypted.',
+                'category' => 'physical',
+                'likelihood' => 3,
+                'impact' => 4,
+                'asset_name' => 'Employee Laptops',
+                'status' => 'assessed',
+            ],
+            [
+                'title' => 'Ransomware attack on file servers',
+                'description' => 'Ransomware could encrypt critical files and demand payment.',
+                'category' => 'technical',
+                'likelihood' => 3,
+                'impact' => 5,
+                'asset_name' => 'Email Server',
+                'status' => 'monitored',
+            ],
+            [
+                'title' => 'Insider threat from departing employees',
+                'description' => 'Departing employees could exfiltrate data before leaving.',
+                'category' => 'organizational',
+                'likelihood' => 3,
+                'impact' => 4,
+                'asset_name' => 'Source Code Repository',
+                'status' => 'treated',
+            ],
+            [
+                'title' => 'DDoS attack on public services',
+                'description' => 'Distributed denial of service could make services unavailable.',
+                'category' => 'technical',
+                'likelihood' => 3,
+                'impact' => 3,
+                'asset_name' => 'Cloud Infrastructure (AWS)',
+                'status' => 'identified',
+            ],
+            [
+                'title' => 'Physical break-in to data center',
+                'description' => 'Unauthorized physical access to servers could lead to data theft.',
+                'category' => 'physical',
+                'likelihood' => 2,
+                'impact' => 5,
+                'asset_name' => 'HQ Office Building',
+                'status' => 'assessed',
+            ],
+            [
+                'title' => 'Third-party vendor data breach',
+                'description' => 'Vendor handling customer data could suffer a breach.',
+                'category' => 'compliance',
+                'likelihood' => 3,
+                'impact' => 4,
+                'asset_name' => 'HR Management System',
+                'status' => 'identified',
+            ],
+            [
+                'title' => 'Weak password policies',
+                'description' => 'Users may set weak passwords that can be brute-forced.',
+                'category' => 'organizational',
+                'likelihood' => 4,
+                'impact' => 3,
+                'asset_name' => null,
+                'status' => 'treated',
+            ],
         ];
 
-        foreach ($risks as $risk) {
-            $risk['tenant_id'] = 1;
-            $risk['risk_score'] = $risk['likelihood'] * $risk['impact'];
-            $risk['risk_level'] = self::getRiskLevel($risk['risk_score']);
-            RiskAssessment::create($risk);
+        foreach ($risks as $data) {
+            $likelihood = $data['likelihood'];
+            $impact = $data['impact'];
+            $score = $likelihood * $impact;
+
+            Risk::firstOrCreate(
+                ['tenant_id' => $tenant->id, 'title' => $data['title']],
+                [
+                    'tenant_id' => $tenant->id,
+                    'asset_id' => $data['asset_name'] ? ($assets[$data['asset_name']]->id ?? null) : null,
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'category' => $data['category'],
+                    'likelihood' => $likelihood,
+                    'impact' => $impact,
+                    'risk_score' => $score,
+                    'risk_level' => $this->levelFor($score),
+                    'status' => $data['status'],
+                    'owner_id' => $owner?->id,
+                    'identified_at' => now()->subDays(rand(10, 90)),
+                ]
+            );
         }
+
+        $this->command->info('✓ ' . count($risks) . ' demo risks created');
     }
 
-    private static function getRiskLevel($score)
+    private function levelFor(int $score): string
     {
-        if ($score >= 17)
-            return 'critical';
-        if ($score >= 10)
-            return 'high';
-        if ($score >= 5)
-            return 'medium';
-        return 'low';
+        return match (true) {
+            $score >= 20 => 'critical',
+            $score >= 12 => 'high',
+            $score >= 6 => 'medium',
+            default => 'low',
+        };
     }
 }

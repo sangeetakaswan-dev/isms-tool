@@ -95,7 +95,15 @@ class Assessment extends Model
     {
         return $this->hasMany(AssessmentTeam::class);
     }
+    public function soaEntries()
+    {
+        return $this->hasMany(\App\Models\SoAEntry::class);
+    }
 
+    public function soaVersions()
+    {
+        return $this->hasMany(\App\Models\SoAVersion::class);
+    }
     public function assessors(): HasMany
     {
         return $this->hasMany(AssessmentTeam::class)->where('role', 'assessor');

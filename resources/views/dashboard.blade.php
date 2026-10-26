@@ -1,185 +1,245 @@
-{{-- resources/views/dashboard.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('header')
+    <h2 class="font-semibold text-xl text-slate-900 leading-tight">Executive Dashboard</h2>
+@endsection
 
 @section('content')
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Welcome Section -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <h2 class="text-2xl font-bold text-gray-800">
-                        Welcome, {{ auth()->user()->name }}!
-                    </h2>
-                    <p class="mt-2 text-gray-600">
-                        @if(auth()->user()->currentTenant)
-                            Current Organization: <strong>{{ auth()->user()->currentTenant->name }}</strong>
-                        @else
-                            You don't have an organization yet.
-                        @endif
-                    </p>
+    @php
+        // Clean Data Extraction (Kyunki Service sahi format me data de raha hai)
+        $score = $metrics->complianceScore ?? 0;
+        $riskSum = $metrics->riskSummary ?? [];
+        $riskTotal = $riskSum['total'] ?? 0;
+        $riskOpen = $riskSum['open'] ?? 0;
+        $riskCritical = $riskSum['critical'] ?? 0;
+        $riskByLevel = $riskSum;
+
+        // Domain Arrays
+        $domLabels = array_column($metrics->domainCompliance ?? [], 'domain');
+        $domData = array_column($metrics->domainCompliance ?? [], 'score');
+
+        // Trend Arrays
+        $trendLabels = array_column($metrics->trend ?? [], 'date');
+        $trendData = array_column($metrics->trend ?? [], 'score');
+
+        // Counts
+        $totalCtrls = $metrics->counts['controls'] ?? 115;
+        $implemented = $score > 0 ? round(($score / 100) * $totalCtrls) : 0;
+        $approved = $metrics->counts['documents'] ?? 0;
+    @endphp
+
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        {{-- Page Header --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Compliance Posture</h1>
+                <p class="text-sm text-slate-500 mt-1">Real-time overview of your ISO 27001 readiness.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-slate-500 font-medium">Last updated: {{ now()->format('M d, Y H:i') }}</span>
+            </div>
+        </div>
+
+        {{-- ROW 1: KPI Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {{-- Card 1: Compliance Score --}}
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <svg class="w-16 h-16 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-medium text-slate-500">Compliance Score</p>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <p class="text-3xl font-mono font-semibold text-slate-900">{{ $score }}%</p>
+                    <span class="text-xs font-medium text-emerald-600 flex items-center">
+                        <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                        Live
+                    </span>
                 </div>
             </div>
 
-            @if(!auth()->user()->currentTenant)
-                <!-- No Tenant -->
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                You need to create or join an organization to get started.
-                            </p>
-                            <div class="mt-4">
-                                <a href="{{ route('tenants.setup') }}"
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                    Create Organization
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+            {{-- Card 2: Open Risks --}}
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <svg class="w-16 h-16 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                    </svg>
                 </div>
-            @else
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    <!-- Total Domains -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                    </svg>
-                                </div>
-                                <div class="ml-5">
-                                    <div class="text-2xl font-bold text-gray-900">{{ $stats['total_domains'] }}</div>
-                                    <div class="text-sm text-gray-500">Domains</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total Controls -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div class="ml-5">
-                                    <div class="text-2xl font-bold text-gray-900">{{ $stats['total_controls'] }}</div>
-                                    <div class="text-sm text-gray-500">Total Controls</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Active Assessments -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div class="ml-5">
-                                    <div class="text-2xl font-bold text-gray-900">{{ $stats['active_assessments'] }}</div>
-                                    <div class="text-sm text-gray-500">Active Assessments</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Completed Assessments -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                                <div class="ml-5">
-                                    <div class="text-2xl font-bold text-gray-900">{{ $stats['completed_assessments'] }}</div>
-                                    <div class="text-sm text-gray-500">Completed</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <p class="text-sm font-medium text-slate-500">Open Risks</p>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <p class="text-3xl font-mono font-semibold text-slate-900">{{ $riskOpen }}</p>
+                    @if($riskCritical > 0)
+                        <span class="text-xs font-medium text-red-600">{{ $riskCritical }} Critical</span>
+                    @endif
                 </div>
+            </div>
 
-                <!-- Domains Overview -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                    <div class="p-6 bg-white border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">ISO 27001 Domains</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($domains as $domain)
-                                <div class="border rounded-lg p-4">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span
-                                            class="text-xs font-semibold px-2 py-1 rounded {{ $domain->clause_type === 'annex_a' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                                            {{ $domain->code }}
-                                        </span>
-                                        <span class="text-sm text-gray-500">{{ $domain->controls_count }} controls</span>
-                                    </div>
-                                    <h4 class="font-medium text-gray-900">{{ $domain->name }}</h4>
-                                    <p class="text-xs text-gray-500 mt-2">{{ Str::limit($domain->description, 80) }}</p>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
+            {{-- Card 3: Controls Implemented --}}
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <svg class="w-16 h-16 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
                 </div>
-
-                <!-- Recent Assessments -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 bg-white border-b border-gray-200">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Recent Assessments</h3>
-                            <a href="#" class="text-sm text-indigo-600 hover:text-indigo-900">View All</a>
-                        </div>
-
-                        @if($recentAssessments->count() > 0)
-                            <div class="space-y-4">
-                                @foreach($recentAssessments as $assessment)
-                                        <div class="flex items-center justify-between border-b pb-4">
-                                            <div>
-                                                <h4 class="font-medium text-gray-900">{{ $assessment->name }}</h4>
-                                                <p class="text-sm text-gray-500">
-                                                    Lead Assessor: {{ $assessment->leadAssessor->name }}
-                                                </p>
-                                            </div>
-                                            <div class="flex items-center space-x-4">
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                                                    {{ $assessment->status === 'completed' ? 'bg-green-100 text-green-800' :
-                                    ($assessment->status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-gray-100 text-gray-800') }}">
-                                                    {{ ucfirst(str_replace('_', ' ', $assessment->status)) }}
-                                                </span>
-                                                <span class="text-sm text-gray-500">{{ $assessment->progress_percentage }}%</span>
-                                            </div>
-                                        </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-gray-500 text-center py-8">No assessments created yet.</p>
-                        @endif
-                    </div>
+                <p class="text-sm font-medium text-slate-500">Controls Implemented</p>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <p class="text-3xl font-mono font-semibold text-slate-900">{{ $implemented }}<span
+                            class="text-lg text-slate-400">/{{ $totalCtrls }}</span></p>
                 </div>
-            @endif
+            </div>
+
+            {{-- Card 4: Documents Approved --}}
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <svg class="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                    </svg>
+                </div>
+                <p class="text-sm font-medium text-slate-500">Documents Approved</p>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <p class="text-3xl font-mono font-semibold text-slate-900">{{ $approved }}</p>
+                </div>
+            </div>
         </div>
+
+        {{-- ROW 2: Charts --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            {{-- Domain Compliance (Bar Chart) --}}
+            <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-4 md:p-6 shadow-sm overflow-hidden">
+                <h3 class="text-base font-semibold text-slate-900 mb-4">Domain-wise Compliance</h3>
+                <div class="h-64 md:h-72 w-full">
+                    <canvas id="domainChart"></canvas>
+                </div>
+            </div>
+
+            {{-- Risk Distribution (Doughnut Chart) --}}
+            <div class="bg-white rounded-xl border border-slate-200 p-4 md:p-6 shadow-sm flex flex-col">
+                <h3 class="text-base font-semibold text-slate-900 mb-4">Risk Distribution</h3>
+                <div class="flex-1 flex items-center justify-center relative h-64 md:h-72">
+                    <canvas id="riskChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-3xl font-mono font-bold text-slate-900">{{ $riskTotal }}</span>
+                        <span class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Risks</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ROW 3: Trend Line --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-4 md:p-6 shadow-sm overflow-hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-semibold text-slate-900">Compliance Trend (12 Months)</h3>
+            </div>
+            <div class="h-64 md:h-80 w-full">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
     </div>
+
 @endsection
+
+{{-- CHART JS SCRIPTS --}}
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748B';
+
+            // 1. Domain Chart
+            const domainCtx = document.getElementById('domainChart');
+            if (domainCtx) {
+                new Chart(domainCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($domLabels) !!},
+                        datasets: [{
+                            label: 'Compliance %',
+                            data: {!! json_encode($domData) !!},
+                            backgroundColor: '#4F46E5',
+                            borderRadius: 4,
+                            barThickness: 24,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, grid: { borderDash: [2, 4], color: '#F1F5F9' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // 2. Risk Chart
+            const riskCtx = document.getElementById('riskChart');
+            if (riskCtx) {
+                new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Critical', 'High', 'Medium', 'Low'],
+                        datasets: [{
+                            data: [
+                                                                    {{ $riskByLevel['critical'] ?? 0 }},
+                                                                    {{ $riskByLevel['high'] ?? 0 }},
+                                                                    {{ $riskByLevel['medium'] ?? 0 }},
+                                {{ $riskByLevel['low'] ?? 0 }}
+                            ],
+                            backgroundColor: ['#DC2626', '#F59E0B', '#FBBF24', '#10B981'],
+                            borderWidth: 0,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } }
+                    }
+                });
+            }
+
+            // 3. Trend Chart
+            const trendCtx = document.getElementById('trendChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: {!! json_encode($trendLabels) !!},
+                        datasets: [{
+                            label: 'Compliance Score',
+                            data: {!! json_encode($trendData) !!},
+                            borderColor: '#4F46E5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#4F46E5'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, grid: { borderDash: [2, 4], color: '#F1F5F9' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+@endpush

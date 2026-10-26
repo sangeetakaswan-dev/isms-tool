@@ -13,7 +13,8 @@ class ReportController extends Controller
         private ReportService $service,
         private ExportService $exporter,
         private ReportRepositoryInterface $repo,
-    ) {}
+    ) {
+    }
 
     protected function currentTenantId(Request $request): int
     {
@@ -40,7 +41,7 @@ class ReportController extends Controller
 
         return view('reports.show', [
             'report' => $report,
-            'types'  => $this->service->availableTypes(),
+            'types' => $this->service->availableTypes(),
         ]);
     }
 
@@ -51,22 +52,22 @@ class ReportController extends Controller
         $report = $this->service->generate($type, $tenantId);
 
         $this->repo->storeGeneratedReport([
-            'tenant_id'   => $tenantId,
-            'user_id'     => $request->user()->id,
+            'tenant_id' => $tenantId,
+            'user_id' => $request->user()->id,
             'report_type' => $type,
-            'format'      => $format,
-            'parameters'  => [],
+            'format' => $format,
+            'parameters' => [],
         ]);
 
         return $this->exporter->export($format, $report, $tenantId, $request->user()->id);
     }
 
-    public function history(Request $request)
+    public function history()
     {
-        $tenantId = $this->currentTenantId($request);
+        $reports = \App\Models\GeneratedReport::where('tenant_id', auth()->user()->current_tenant_id)
+            ->latest()
+            ->paginate(15);
 
-        return view('reports.history', [
-            'history' => $this->repo->reportHistory($tenantId),
-        ]);
+        return view('reports.history', compact('reports'));
     }
 }

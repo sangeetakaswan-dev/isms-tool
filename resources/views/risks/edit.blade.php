@@ -1,89 +1,141 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">Edit Risk</h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-8">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <form method="POST" action="{{ route('risks.update', $risk) }}" class="bg-white shadow rounded-lg p-6 space-y-4">
-                @csrf
-                @method('PUT')
-
-                <div>
-                    <label class="block text-sm font-medium">Title *</label>
-                    <input type="text" name="title" value="{{ old('title', $risk->title) }}" required
-                           class="mt-1 block w-full rounded border-gray-300">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium">Description</label>
-                    <textarea name="description" rows="4" class="mt-1 block w-full rounded border-gray-300">{{ old('description', $risk->description) }}</textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium">Category</label>
-                        <select name="category" class="mt-1 block w-full rounded border-gray-300">
-                            @foreach(['technical','organizational','physical','people','compliance'] as $cat)
-                                <option value="{{ $cat }}" @selected(old('category', $risk->category) === $cat)>{{ ucfirst($cat) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Asset</label>
-                        <select name="asset_id" class="mt-1 block w-full rounded border-gray-300">
-                            <option value="">— None —</option>
-                            @foreach($assets as $asset)
-                                <option value="{{ $asset->id }}" @selected(old('asset_id', $risk->asset_id) == $asset->id)>{{ $asset->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium">Likelihood</label>
-                        <input type="number" name="likelihood" min="1" max="5" value="{{ old('likelihood', $risk->likelihood) }}" required
-                               class="mt-1 block w-full rounded border-gray-300">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Impact</label>
-                        <input type="number" name="impact" min="1" max="5" value="{{ old('impact', $risk->impact) }}" required
-                               class="mt-1 block w-full rounded border-gray-300">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium">Owner</label>
-                        <select name="owner_id" class="mt-1 block w-full rounded border-gray-300">
-                            <option value="">— Unassigned —</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" @selected(old('owner_id', $risk->owner_id) == $user->id)>{{ $user->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Status</label>
-                        <select name="status" class="mt-1 block w-full rounded border-gray-300">
-                            @foreach(['identified','assessed','treated','monitored','closed'] as $s)
-                                <option value="{{ $s }}" @selected(old('status', $risk->status) === $s)>{{ ucfirst($s) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex justify-between pt-4">
-                    <form method="POST" action="{{ route('risks.destroy', $risk) }}" onsubmit="return confirm('Delete this risk?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="px-4 py-2 text-red-600 hover:underline">Delete</button>
-                    </form>
-                    <div class="flex gap-2">
-                        <a href="{{ route('risks.show', $risk) }}" class="px-4 py-2 border rounded">Cancel</a>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Update</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+@section('header')
+    <div class="flex items-center gap-3">
+        <a href="{{ route('risks.show', $risk) }}" class="text-slate-400 hover:text-slate-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="font-semibold text-xl text-slate-900 leading-tight">Edit Risk</h2>
     </div>
-</x-app-layout>
+@endsection
+
+@section('content')
+    <div class="max-w-3xl mx-auto">
+        <form method="POST" action="{{ route('risks.update', $risk) }}"
+            class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            @csrf
+            @method('PUT')
+
+            <div class="p-6 md:p-8 space-y-8">
+
+                {{-- Section 1: Basic Info --}}
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-900 border-b border-slate-100 pb-2 mb-4">Basic Information
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Risk Title <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" name="title" value="{{ old('title', $risk->title) }}" required
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            @error('title')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                            <textarea name="description" rows="3"
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('description', $risk->description) }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Category <span
+                                        class="text-red-500">*</span></label>
+                                <select name="category" required
+                                    class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    @foreach(['technical', 'organizational', 'physical', 'people', 'compliance'] as $cat)
+                                        <option value="{{ $cat }}" @selected(old('category', $risk->category) === $cat)>
+                                            {{ ucfirst($cat) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Linked Asset</label>
+                                <select name="asset_id"
+                                    class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">— No Asset Linked —</option>
+                                    @foreach($assets as $asset)
+                                        <option value="{{ $asset->id }}" @selected(old('asset_id', $risk->asset_id) == $asset->id)>{{ $asset->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Section 2: Risk Assessment --}}
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-900 border-b border-slate-100 pb-2 mb-4">Risk Assessment
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Likelihood (1-5) <span
+                                    class="text-red-500">*</span></label>
+                            <input type="number" name="likelihood" min="1" max="5"
+                                value="{{ old('likelihood', $risk->likelihood) }}" required
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Impact (1-5) <span
+                                    class="text-red-500">*</span></label>
+                            <input type="number" name="impact" min="1" max="5" value="{{ old('impact', $risk->impact) }}"
+                                required
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Section 3: Ownership --}}
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-900 border-b border-slate-100 pb-2 mb-4">Ownership & Status
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Risk Owner</label>
+                            <select name="owner_id"
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">— Unassigned —</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}" @selected(old('owner_id', $risk->owner_id) == $user->id)>
+                                        {{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                            <select name="status"
+                                class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                @foreach(['identified', 'assessed', 'treated', 'monitored', 'closed'] as $s)
+                                    <option value="{{ $s }}" @selected(old('status', $risk->status) === $s)>{{ ucfirst($s) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- Form Actions --}}
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <form method="POST" action="{{ route('risks.destroy', $risk) }}"
+                    onsubmit="return confirm('Delete this risk permanently?');">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-900 transition">Delete
+                        Risk</button>
+                </form>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('risks.show', $risk) }}"
+                        class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition">Cancel</a>
+                    <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition shadow-sm">
+                        Update Risk
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+@endsection
