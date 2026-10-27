@@ -14,7 +14,8 @@ class TenantController extends Controller
 {
     public function __construct(
         private readonly TenantService $tenantService
-    ) {}
+    ) {
+    }
 
     public function index(): View
     {
@@ -27,14 +28,26 @@ class TenantController extends Controller
         return view('tenants.create');
     }
 
-    public function store(CreateTenantRequest $request): RedirectResponse
+    public function store(Request $request)
     {
-        $data = TenantData::fromArray($request->validated());
-        $tenant = $this->tenantService->createTenant($data, auth()->id());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'industry' => 'nullable|string',
+            'size' => 'required|in:1-10,11-50,51-200,201-1000,1000+',
+            'contact_email' => 'required|email',
+        ]);
 
-        return redirect()
-            ->route('dashboard')
-            ->with('success', "Organization '{$tenant->name}' created successfully!");
+        $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']) . '-' . \Illuminate\Support\Str::random(6);
+
+        $tenant = \App\Models\Tenant::create($validated);
+
+        // Attach user as owner
+        auth()->user()->tenants()->attach($tenant->id, ['role' => 'owner']);
+
+        // Set as current tenant
+        auth()->user()->update(['current_tenant_id' => $tenant->id]);
+
+        return redirect()->route('dashboard')->with('success', 'Organization created successfully!');
     }
 
     public function show(Tenant $tenant): View

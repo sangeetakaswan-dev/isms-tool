@@ -4,31 +4,33 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
 
 class EnsureTenantSelected
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        if ($user && !$user->current_tenant_id) {
-            // Allow tenant setup routes
-            if ($request->routeIs('tenant.setup', 'tenant.store', 'tenants.*')) {
-                return $next($request);
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        // Agar current_tenant_id null hai
+        if (is_null($user->current_tenant_id)) {
+            // Check karo user ke paas koi tenant hai
+            $firstTenant = $user->tenants()->first();
+
+            if ($firstTenant) {
+                // Auto-attach first tenant
+                $user->update(['current_tenant_id' => $firstTenant->id]);
+            } else {
+                // Koi tenant nahi hai — gracefull redirect to tenant setup
+                if (!$request->routeIs('tenants.*') && !$request->routeIs('profile.*') && !$request->routeIs('logout')) {
+                    return redirect()
+                        ->route('tenants.setup')
+                        ->with('warning', 'Welcome! Please create your first organization to get started.');
+                }
             }
-
-            // For API requests
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'No organization selected. Please select an organization.',
-                ], 403);
-            }
-
-            // Redirect to tenant setup
-            return redirect()->route('tenant.setup')
-                ->with('warning', 'Please select or create an organization to continue.');
         }
 
         return $next($request);

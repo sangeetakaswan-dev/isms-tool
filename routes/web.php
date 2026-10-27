@@ -18,6 +18,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RiskRegisterController;
 use App\Http\Controllers\RiskTreatmentController;
+use Illuminate\Support\Facades\Storage;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -186,6 +188,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Media Serving Route (InfinityFree Workaround)
+|--------------------------------------------------------------------------
+| Symlink disabled hone ki wajah se files direct serve kar rahe hain.
+*/
+Route::get('/media/{path}', function ($path) {
+    // 1. Path traversal attack block karo (agar URL me '..' hai to reject)
+    if (str_contains($path, '..')) {
+        abort(404);
+    }
+
+    // 2. Real paths resolve karo
+    $basePath = realpath(storage_path('app/public'));
+    $filePath = realpath(storage_path('app/public/' . $path));
+
+    // 3. Ensure karo ki file exist karti hai aur wo base path ke andar hi hai
+    if ($filePath === false || !str_starts_with($filePath, $basePath)) {
+        abort(404);
+    }
+
+    // 4. File return karo
+    return response()->file($filePath);
+})->where('path', '.*')->name('media.serve');
 
 /*
 |--------------------------------------------------------------------------

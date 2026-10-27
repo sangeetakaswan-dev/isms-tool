@@ -12,8 +12,10 @@
 @endsection
 
 @section('content')
-    <div class="max-w-3xl mx-auto">
-        <form method="POST" action="{{ route('risks.update', $risk) }}"
+    <div class="max-w-3xl mx-auto space-y-4">
+
+        {{-- UPDATE FORM --}}
+        <form method="POST" action="{{ route('risks.update', $risk) }}" id="update-form"
             class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             @csrf
             @method('PUT')
@@ -48,7 +50,8 @@
                                     class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                     @foreach(['technical', 'organizational', 'physical', 'people', 'compliance'] as $cat)
                                         <option value="{{ $cat }}" @selected(old('category', $risk->category) === $cat)>
-                                            {{ ucfirst($cat) }}</option>
+                                            {{ ucfirst($cat) }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -100,7 +103,8 @@
                                 <option value="">— Unassigned —</option>
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}" @selected(old('owner_id', $risk->owner_id) == $user->id)>
-                                        {{ $user->name }}</option>
+                                        {{ $user->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -121,12 +125,12 @@
 
             {{-- Form Actions --}}
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                <form method="POST" action="{{ route('risks.destroy', $risk) }}"
-                    onsubmit="return confirm('Delete this risk permanently?');">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-900 transition">Delete
-                        Risk</button>
-                </form>
+                {{-- ✅ Delete button — targets SEPARATE form via form attribute --}}
+                <button type="submit" form="delete-form" onclick="return confirm('Delete this risk permanently?')"
+                    class="text-sm font-medium text-red-600 hover:text-red-900 transition">
+                    Delete Risk
+                </button>
+
                 <div class="flex items-center gap-3">
                     <a href="{{ route('risks.show', $risk) }}"
                         class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition">Cancel</a>
@@ -137,5 +141,12 @@
                 </div>
             </div>
         </form>
+
+        {{-- ✅ DELETE FORM (separate, OUTSIDE update form) --}}
+        <form method="POST" action="{{ route('risks.destroy', $risk) }}" id="delete-form" style="display:none;">
+            @csrf
+            @method('DELETE')
+        </form>
+
     </div>
 @endsection

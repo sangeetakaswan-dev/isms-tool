@@ -108,6 +108,7 @@ isms-tool
 │  │  └─ TreatmentDueNotification.php
 │  ├─ Policies
 │  │  ├─ AssessmentTeamPolicy.php
+│  │  ├─ AssetPolicy.php
 │  │  └─ RiskPolicy.php
 │  ├─ Providers
 │  │  ├─ AppServiceProvider.php
@@ -251,33 +252,60 @@ isms-tool
 │  │  ├─ 2026_10_11_174028_create_notifications_table.php
 │  │  └─ 2026_10_11_185711_make_due_date_nullable_on_treatment_plans.php
 │  └─ seeders
+│     ├─ AssessmentSeeder.php
 │     ├─ AssessmentTeamSeeder.php
 │     ├─ AssetSeeder.php
 │     ├─ ControlSeeder.php
 │     ├─ DatabaseSeeder.php
 │     ├─ DemoDataSeeder.php
+│     ├─ DocumentSeeder.php
 │     ├─ DomainSeeder.php
+│     ├─ InvitationSeeder.php
+│     ├─ NotificationSeeder.php
 │     ├─ PolicyTemplateSeeder.php
 │     ├─ RiskManagementSeeder.php
 │     ├─ RiskSeeder.php
+│     ├─ SoASeeder.php
 │     ├─ TestUserSeeder.php
 │     ├─ TreatmentPlanSeeder.php
 │     └─ UserSeeder.php
+├─ docs
+│  ├─ Phase Reports
+│  │  ├─ phase 1 report .md
+│  │  ├─ phase 2 report.md
+│  │  ├─ phase 3 report.md
+│  │  ├─ phase 4 report.md
+│  │  ├─ phase 5 report.md
+│  │  ├─ phase 6 report.md
+│  │  └─ phase 7 report.md
+│  └─ screenshots
+│     ├─ assessments
+│     ├─ assets
+│     ├─ auth
+│     ├─ dashboard
+│     ├─ documents
+│     ├─ mobile
+│     ├─ reports
+│     ├─ risks
+│     ├─ security
+│     └─ soa
 ├─ end goal.txt
 ├─ package-lock.json
 ├─ package.json
-├─ phase 1 report .md
-├─ phase 2 report.md
-├─ phase 3 report.md
-├─ phase 4 report.md
-├─ phase 5 report.md
-├─ phase 6 report.md
-├─ phase 7 report.md
 ├─ phpunit.xml
 ├─ postcss.config.js
 ├─ public
 │  ├─ .htaccess
 │  ├─ favicon.ico
+│  ├─ images
+│  │  ├─ android-chrome-192x192.png
+│  │  ├─ android-chrome-512x512.png
+│  │  ├─ apple-touch-icon.png
+│  │  ├─ favicon-16x16.png
+│  │  ├─ favicon-32x32.png
+│  │  ├─ favicon.ico
+│  │  ├─ logo-full.png
+│  │  └─ logo-icon.png
 │  ├─ index.php
 │  └─ robots.txt
 ├─ README.md
@@ -290,6 +318,7 @@ isms-tool
 │  └─ views
 │     ├─ assessments
 │     │  ├─ conduct
+│     │  │  ├─ domain.blade.php
 │     │  │  └─ index.blade.php
 │     │  ├─ create.blade.php
 │     │  ├─ index.blade.php
@@ -331,6 +360,8 @@ isms-tool
 │     │  ├─ create.blade.php
 │     │  ├─ index.blade.php
 │     │  └─ show.blade.php
+│     ├─ invitations
+│     │  └─ index.blade.php
 │     ├─ layouts
 │     │  ├─ app.blade.php
 │     │  ├─ guest.blade.php
@@ -376,6 +407,11 @@ isms-tool
 ├─ storage
 │  ├─ app
 │  │  ├─ private
+│  │  │  ├─ documents
+│  │  │  │  └─ 1
+│  │  │  │     └─ records
+│  │  │  │        ├─ R2Ziy6zVH8uD8o5pbXRoqo5Axt1hzG9hPYk2k5FA.pdf
+│  │  │  │        └─ vfvdjsr0uQmypxrwj54bOi1rOKIxAgMqb0gLJokz.pdf
 │  │  │  └─ templates
 │  │  │     ├─ Acceptable_Use_Policy.txt
 │  │  │     ├─ Access_Control_Policy.txt
@@ -393,11 +429,8 @@ isms-tool
 │  │  │  ├─ data
 │  │  │  └─ laravel-excel
 │  │  ├─ sessions
-│  │  │  ├─ aNefmCWWnI4rvrZB2NYHMavKcNuuC5JMGn42ev7H
-│  │  │  ├─ lzAMUMKhB6mhvAY1QGub6xslqDYRx02xYOktEdk5
-│  │  │  ├─ rCDVoka8VFWioTbGWMJciYBCOiGKj8q8QKapp8Yq
-│  │  │  ├─ yeU04bGx91lIjQMYlGtCwaPfWPDtJ6PP2fKjpYL8
-│  │  │  └─ yxv0AhX8tId81hL5Aqt4kMUc8Zi0rxmYEOy78exV
+│  │  │  ├─ Ejx9iQjVo4OcZ8GaHdh57oj3v4vUZj53K4Pr0V4F
+│  │  │  └─ ZFDEnvABPRJEEPqCaJWzwkpfvtNmS2MRfHwo06LA
 │  │  ├─ testing
 │  │  │  └─ disks
 │  │  │     ├─ local
@@ -407,6 +440,31 @@ isms-tool
 │  │  │     │           └─ R5SD9wMvNd8Sf3Wws94ngYUcbBObH7P0QiXHUXFs.pdf
 │  │  │     └─ public
 │  │  └─ views
+│  │     ├─ 187a60cae99b2e8b8ca17e8858d2fb08.php
+│  │     ├─ 19eb587f4491147ab834960d09abaa62.php
+│  │     ├─ 1a02c8cb39b9a7a5afe73f70ba3b223f.php
+│  │     ├─ 30786c2cd9af322dc6580629b951924a.php
+│  │     ├─ 3bc38443205c70a5338e844bd34ddc54.php
+│  │     ├─ 4d4684da81d42471d75589efd75a1e8a.php
+│  │     ├─ 5bc9904d99b730cfe63214add19d5e8b.php
+│  │     ├─ 6cfb68511296a881661332c4fc6993d7.php
+│  │     ├─ 75e4df25d3e92aaf8fe2aa2534cccded.php
+│  │     ├─ 77cf957622685f367eed842b07002ca3.php
+│  │     ├─ 821d74ecf92e26a97879d4d5a715e6be.php
+│  │     ├─ 8e04b8c66ea44fca8d2162321eb79e22.php
+│  │     ├─ 94e3ee5e01adf7e5c0ddcfdb73cc3679.php
+│  │     ├─ aa9574575b003238bc41a5e51164cc4b.php
+│  │     ├─ ada2d36dd631563c7b2c988a2d3a1508.php
+│  │     ├─ aec0ba277ac620f589eba1c30e819d3e.php
+│  │     ├─ b82bb8892b926c626f4843fe25f27528.php
+│  │     ├─ bbd1780bbcb965aee8592da85b8aae28.php
+│  │     ├─ c6bc2c61c2cd16c3c1f43dede404ed63.php
+│  │     ├─ cfc4834cf74aabd79c57beb706a6dff3.php
+│  │     ├─ d1ddba75ef8ad49b8fc5396777eb2392.php
+│  │     ├─ d98777a016401d8df3d71cdbc5066c98.php
+│  │     ├─ f23ced557d9c304cf92aa44a26ccbf0e.php
+│  │     ├─ fbc7b7aea7725b31cf54fe78b4ba91d1.php
+│  │     └─ ff40dff44b8d26ba8d132c065cc801b8.php
 │  └─ logs
 ├─ tailwind.config.js
 ├─ tests

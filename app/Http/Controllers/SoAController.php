@@ -48,11 +48,17 @@ class SoAController extends Controller
         return view('soa.show', compact('version', 'entries'));
     }
 
-    public function approve($entry)
+    public function approve(Request $request, Assessment $assessment, SoAEntry $entry)
     {
-        $entry = \App\Models\SoAEntry::findOrFail($entry);
-        $this->soaService->approveEntry($entry, Auth::id());
-        return back()->with('success', 'Entry approved');
+        // Authorization (optional but recommended)
+        abort_unless($entry->assessment_id === $assessment->id, 403);
+
+        $entry->update([
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'SoA entry approved successfully.');
     }
     public function bulkApprove(Assessment $assessment)
     {

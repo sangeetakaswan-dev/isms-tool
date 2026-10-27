@@ -135,9 +135,14 @@
                                             <span class="font-medium">Approved</span>
                                         </div>
                                     @else
-                                        <button class="text-sm font-medium text-indigo-600 hover:text-indigo-900 px-3 py-1 bg-indigo-50 rounded-md hover:bg-indigo-100 transition opacity-0 group-hover:opacity-100">
-                                            Approve
-                                        </button>
+                                        @if(!$entry->approved_at)
+    <form method="POST" action="{{ route('soa.approve', [$assessment, $entry]) }}" class="inline">
+        @csrf
+        <button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-900 px-3 py-1 bg-indigo-50 rounded-md hover:bg-indigo-100 transition">
+            Approve
+        </button>
+    </form>
+@endif
                                     @endif
                                 </td>
                             </tr>
